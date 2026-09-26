@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Carte AMMDF</title>
+	<style>
+		* {
+			box-sizing: border-box;
+		}
+
+		body {
+			margin: 0;
+			padding: 16px;
+			background: #e8e8e8;
+			color: #292929;
+			font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+		}
+
+		.card {
+			display: grid;
+			grid-template-columns: minmax(145px, 25%) 1fr;
+			align-items: center;
+			width: min(100%, 900px);
+			min-height: 350px;
+			margin: 0 auto;
+			padding: 8px 12px;
+			overflow: hidden;
+			border: 2px solid #292929;
+			background: #f8f8f6;
+		}
+
+		.card__logo {
+			display: block;
+			width: 100%;
+			max-height: 330px;
+			object-fit: contain;
+		}
+
+		.card__content {
+			display: flex;
+			flex-direction: column;
+			justify-content: space-between;
+			align-self: stretch;
+			min-width: 0;
+			padding: 14px 0 22px 8px;
+		}
+
+		.card__heading {
+			margin: 0;
+			text-align: center;
+			font-size: clamp(21px, 4.5vw, 42px);
+			line-height: 1.12;
+			text-transform: uppercase;
+		}
+
+		.card__heading span {
+			display: block;
+			white-space: nowrap;
+		}
+
+		.card__field {
+			display: grid;
+			grid-template-columns: max-content minmax(30px, 1fr);
+			align-items: baseline;
+			gap: 10px;
+			margin: 0;
+			font-size: clamp(20px, 4.4vw, 40px);
+			line-height: 1;
+			text-transform: uppercase;
+		}
+
+		.card__line {
+			min-width: 0;
+			height: 0.65em;
+			border-bottom: 4px dotted #292929;
+		}
+
+		@media (max-width: 560px) {
+			body {
+				padding: 10px;
+			}
+
+			.card {
+				grid-template-columns: 1fr;
+				min-height: 0;
+				padding: 12px;
+			}
+
+			.card__logo {
+				width: auto;
+				height: 230px;
+				max-width: 100%;
+				margin: 0 auto;
+			}
+
+			.card__content {
+				gap: 30px;
+				padding: 12px 0 8px;
+			}
+
+			.card__heading span {
+				white-space: normal;
+			}
+
+			.card__field {
+				grid-template-columns: 1fr;
+				gap: 5px;
+			}
+
+			.card__line {
+				width: 100%;
+			}
+		}
+	</style>
+</head>
+<body>
+	<main class="card" aria-label="Carte de l'Association Motards et Motards de France">
+		<img class="card__logo" src="../images/logo.jpg" alt="Logos bleu et rose de l'AMMDF">
+		<section class="card__content">
+			<h1 class="card__heading">
+				<span>Association</span>
+				<span>Motards et Motards de France</span>
+			</h1>
+			<p class="card__field"><span>Votre lot :</span><span class="card__line" aria-hidden="true"></span></p>
+			<p class="card__field"><span>Emplacement :</span><span class="card__line" aria-hidden="true"></span></p>
+		</section>
+	</main>
+</body>
+</html>
