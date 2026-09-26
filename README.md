@@ -50,7 +50,7 @@ python3 -m venv .venv
 
 ## Lancer l'application
 
-### Windows
+### Impression sous Windows
 
 ```powershell
 .\.venv\Scripts\python.exe app.py
@@ -62,7 +62,7 @@ Ou double-cliquez sur :
 dist\AMMDF.exe
 ```
 
-### macOS
+### Impression sous macOS
 
 ```bash
 .venv/bin/python app.py
