@@ -235,3 +235,11 @@ Pour l'executable, relancez `update_exe.cmd` afin de reintegrer les ressources.
 - Les etiquettes sont organisees en 2 colonnes et 7 lignes par page.
 - L'impression directe depend des pilotes installes sur le systeme.
 - L'application n'enregistre pas automatiquement les listes entre deux lancements.
+
+## Licence
+
+Ce projet est distribue sous licence **MIT**.
+
+Copyright (c) 2026 Campourcy Maxence.
+
+La licence complete est disponible dans le fichier [LICENSE](LICENSE). Elle autorise notamment l'utilisation, la copie, la modification et la distribution du logiciel, sous reserve de conserver la notice de copyright et les conditions de la licence.
