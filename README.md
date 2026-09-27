@@ -41,7 +41,15 @@ py -3 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
 
-Sous macOS ou Linux :
+Sous macOS, installez Python avec Tk via Homebrew, puis créez le venv avec Python 3.12 :
+
+```bash
+brew install python@3.12 python-tk@3.12
+python3.12 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+```
+
+Sous Linux :
 
 ```bash
 python3 -m venv .venv
@@ -100,11 +108,11 @@ L'application ajoute 12 etiquettes identiques dans la liste. Le nombre `12` n'ap
 
 | Raccourci | Action |
 | --- | --- |
-| `Ctrl+N` | Afficher le formulaire d'ajout et placer le focus sur le lot |
-| `Delete` | Supprimer l'etiquette selectionnee |
-| `Ctrl+Suppr` | Vider toute la liste apres confirmation |
-| `Ctrl+S` | Enregistrer le PDF |
-| `Ctrl+P` | Ouvrir l'aperçu avant impression |
+| `Ctrl` (Windows) / `⌘` (macOS) + `N` | Afficher le formulaire d'ajout et placer le focus sur le lot |
+| `Delete` (Windows) / `⌫` (macOS) | Supprimer l'etiquette selectionnee |
+| `Ctrl+Suppr` (Windows) / `⌘+⌫` (macOS) | Vider toute la liste apres confirmation |
+| `Ctrl+S` (Windows) / `⌘+S` (macOS) | Enregistrer le PDF |
+| `Ctrl+P` (Windows) / `⌘+P` (macOS) | Ouvrir l'aperçu avant impression |
 | `Entree` | Passer au champ suivant ou ajouter l'etiquette |
 | `←` / `→` | Naviguer entre les pages de l'aperçu |
 | `Echap` | Fermer l'aperçu ou le gestionnaire d'imprimante |
@@ -148,6 +156,17 @@ dist\AMMDF.exe
 
 Fermez l'executable avant de lancer la reconstruction afin que Windows puisse remplacer le fichier.
 
+## Creer l'image disque macOS
+
+Le script `build_macos.sh` compile l'application en `AMMDF.app`, puis cree une image disque avec un raccourci vers le dossier Applications. Il faut macOS, Xcode Command Line Tools et Python 3.11+ avec Tk 8.6+.
+
+```bash
+brew install python@3.12 python-tk@3.12
+./build_macos.sh
+```
+
+Le fichier genere est `dist/AMMDF-macOS.dmg`. Le bundle n'est pas signe ni notarie; une distribution publique necessite une signature Developer ID et une notarisation Apple.
+
 ## Dependances
 
 Les dependances d'execution sont dans `requirements.txt` :
@@ -160,7 +179,7 @@ Les dependances d'execution sont dans `requirements.txt` :
 Les dependances de build sont dans `requirements-build.txt` :
 
 - les dependances d'execution ;
-- `PyInstaller` pour creer l'executable Windows.
+- `PyInstaller` pour creer les applications Windows et macOS.
 
 ## Structure du projet
 
@@ -174,8 +193,10 @@ ammdf/
 ├── requirements.txt          # Dependances d'execution
 ├── requirements-build.txt    # Dependances de build
 ├── update_exe.cmd            # Reconstruction automatique de l'executable Windows
+├── build_macos.sh            # Creation de AMMDF.app et du DMG macOS
 └── dist/
-    └── AMMDF.exe             # Executable genere
+  ├── AMMDF.exe             # Executable Windows genere
+  └── AMMDF-macOS.dmg       # Image disque macOS generee
 ```
 
 Les dossiers `build`, `dist`, `.venv`, les caches Python et les PDF generes sont ignores par Git lorsque le projet est versionne.

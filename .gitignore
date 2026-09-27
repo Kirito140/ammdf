@@ -5,6 +5,7 @@ __pycache__/
 
 # Environments and local settings
 .venv/
+.venv-py39-backup/
 venv/
 env/
 .env

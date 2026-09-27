@@ -205,12 +205,8 @@ def get_available_printers() -> tuple[list[str], str]:
         return names, default_name
 
     if sys.platform == "darwin":
-        printers = subprocess.run(["lpstat", "-p"], capture_output=True, text=True, check=True)
-        names = sorted(
-            line[len("printer "):].partition(" is ")[0]
-            for line in printers.stdout.splitlines()
-            if line.startswith("printer ") and " is " in line
-        )
+        printers = subprocess.run(["lpstat", "-e"], capture_output=True, text=True, check=True)
+        names = sorted(line.strip() for line in printers.stdout.splitlines() if line.strip())
         default = subprocess.run(["lpstat", "-d"], capture_output=True, text=True, check=False)
         default_name = default.stdout.partition(":")[2].strip()
         if default_name not in names:
@@ -220,7 +216,21 @@ def get_available_printers() -> tuple[list[str], str]:
     raise OSError("Les imprimantes sont prises en charge uniquement sous Windows et macOS.")
 
 
-def center_window(window: tk.Toplevel) -> None:
+def fit_window_to_screen(
+    window: tk.Tk | tk.Toplevel,
+    width: int,
+    height: int,
+    min_width: int,
+    min_height: int,
+) -> None:
+    window.update_idletasks()
+    width = min(width, max(1, window.winfo_screenwidth() - 48))
+    height = min(height, max(1, window.winfo_screenheight() - 96))
+    window.minsize(min(min_width, width), min(min_height, height))
+    window.geometry(f"{width}x{height}")
+
+
+def center_window(window: tk.Tk | tk.Toplevel) -> None:
     window.update_idletasks()
     x = max(0, (window.winfo_screenwidth() - window.winfo_width()) // 2)
     y = max(0, (window.winfo_screenheight() - window.winfo_height()) // 2)
@@ -239,8 +249,7 @@ class PrintPreviewWindow:
 
         self.window = tk.Toplevel(parent)
         self.window.title("Aperçu avant impression · AMMDF")
-        self.window.geometry("1120x820")
-        self.window.minsize(760, 600)
+        fit_window_to_screen(self.window, 1120, 820, 700, 540)
         self.window.configure(background="#edf2f0")
 
         content = ttk.Frame(self.window, style="App.TFrame", padding=(22, 18))
@@ -358,8 +367,7 @@ class PrinterManagerWindow:
         self.pdf_path = pdf_path
         self.window = tk.Toplevel(parent)
         self.window.title("Gestionnaire d’imprimante")
-        self.window.geometry("560x390")
-        self.window.minsize(500, 360)
+        fit_window_to_screen(self.window, 560, 390, 440, 340)
         self.window.transient(parent)
         self.window.configure(background="#edf2f0")
         self.printing = False
@@ -501,32 +509,39 @@ class LabelApp:
         self.preview_window: PrintPreviewWindow | None = None
         self.printer_manager: PrinterManagerWindow | None = None
         root.title("Planche d'étiquettes AMMDF")
-        root.geometry("960x700")
-        root.minsize(760, 600)
+        fit_window_to_screen(root, 960, 700, 720, 560)
         root.configure(background="#edf2f0")
 
         style = ttk.Style(root)
-        if "clam" in style.theme_names():
+        available_themes = style.theme_names()
+        tk_version = tuple(int(part) for part in root.tk.call("info", "patchlevel").split("."))
+        if sys.platform == "darwin" and "aqua" in available_themes:
+            style.theme_use("aqua" if tk_version >= (8, 6) else "default")
+        elif "clam" in available_themes:
             style.theme_use("clam")
+        font_family = "Helvetica Neue" if sys.platform == "darwin" else "Segoe UI"
+        self.shortcut_modifier = "Command" if sys.platform == "darwin" else "Control"
+        self.shortcut_label = "⌘" if sys.platform == "darwin" else "Ctrl+"
+        self.delete_key = "BackSpace" if sys.platform == "darwin" else "Delete"
         style.configure("App.TFrame", background="#edf2f0")
         style.configure("Surface.TFrame", background="#ffffff")
-        style.configure("Header.TLabel", background="#edf2f0", foreground="#1d2d32", font=("Segoe UI", 21, "bold"))
-        style.configure("Subheader.TLabel", background="#edf2f0", foreground="#687875", font=("Segoe UI", 10))
-        style.configure("Eyebrow.TLabel", background="#edf2f0", foreground="#087f76", font=("Segoe UI", 9, "bold"))
-        style.configure("Badge.TLabel", background="#e1eeeb", foreground="#12665f", font=("Segoe UI", 10, "bold"))
-        style.configure("Status.TLabel", background="#edf2f0", foreground="#25383c", font=("Segoe UI", 10, "bold"))
-        style.configure("EmptyTitle.TLabel", background="#ffffff", foreground="#26383c", font=("Segoe UI", 15, "bold"))
-        style.configure("EmptyBody.TLabel", background="#ffffff", foreground="#72807c", font=("Segoe UI", 10))
-        style.configure("Field.TLabel", background="#ffffff", foreground="#354744", font=("Segoe UI", 10, "bold"))
-        style.configure("InlineTitle.TLabel", background="#ffffff", foreground="#26383c", font=("Segoe UI", 13, "bold"))
-        style.configure("InlineBody.TLabel", background="#ffffff", foreground="#72807c", font=("Segoe UI", 9))
-        style.configure("DialogTitle.TLabel", background="#ffffff", foreground="#26383c", font=("Segoe UI", 16, "bold"))
-        style.configure("DialogBody.TLabel", background="#ffffff", foreground="#72807c", font=("Segoe UI", 10))
-        style.configure("Treeview", rowheight=36, font=("Segoe UI", 10), background="#ffffff", fieldbackground="#ffffff", borderwidth=0)
-        style.configure("Treeview.Heading", font=("Segoe UI", 9, "bold"), background="#e6eeeb", foreground="#435550", padding=(9, 9))
+        style.configure("Header.TLabel", background="#edf2f0", foreground="#1d2d32", font=(font_family, 21, "bold"))
+        style.configure("Subheader.TLabel", background="#edf2f0", foreground="#687875", font=(font_family, 10))
+        style.configure("Eyebrow.TLabel", background="#edf2f0", foreground="#087f76", font=(font_family, 9, "bold"))
+        style.configure("Badge.TLabel", background="#e1eeeb", foreground="#12665f", font=(font_family, 10, "bold"))
+        style.configure("Status.TLabel", background="#edf2f0", foreground="#25383c", font=(font_family, 10, "bold"))
+        style.configure("EmptyTitle.TLabel", background="#ffffff", foreground="#26383c", font=(font_family, 15, "bold"))
+        style.configure("EmptyBody.TLabel", background="#ffffff", foreground="#72807c", font=(font_family, 10))
+        style.configure("Field.TLabel", background="#ffffff", foreground="#354744", font=(font_family, 10, "bold"))
+        style.configure("InlineTitle.TLabel", background="#ffffff", foreground="#26383c", font=(font_family, 13, "bold"))
+        style.configure("InlineBody.TLabel", background="#ffffff", foreground="#72807c", font=(font_family, 9))
+        style.configure("DialogTitle.TLabel", background="#ffffff", foreground="#26383c", font=(font_family, 16, "bold"))
+        style.configure("DialogBody.TLabel", background="#ffffff", foreground="#72807c", font=(font_family, 10))
+        style.configure("Treeview", rowheight=36, font=(font_family, 10), background="#ffffff", fieldbackground="#ffffff", borderwidth=0)
+        style.configure("Treeview.Heading", font=(font_family, 9, "bold"), background="#e6eeeb", foreground="#435550", padding=(9, 9))
         style.map("Treeview", background=[("selected", "#cce9e3")], foreground=[("selected", "#173c36")])
-        style.configure("TButton", font=("Segoe UI", 10), padding=(12, 8))
-        style.configure("Primary.TButton", background="#087f76", foreground="#ffffff", font=("Segoe UI", 10, "bold"))
+        style.configure("TButton", font=(font_family, 10), padding=(12, 8))
+        style.configure("Primary.TButton", background="#087f76", foreground="#ffffff", font=(font_family, 10, "bold"))
         style.map("Primary.TButton", background=[("pressed", "#075f58"), ("active", "#0a7069")])
         style.configure("Horizontal.TProgressbar", troughcolor="#dce6e2", background="#087f76", bordercolor="#dce6e2", lightcolor="#087f76", darkcolor="#087f76")
         style.configure("TEntry", padding=(8, 7))
@@ -642,7 +657,7 @@ class LabelApp:
         status.pack(fill="x", pady=(14, 7))
         self.count_label = ttk.Label(status, text="0 / 14 étiquettes", style="Status.TLabel")
         self.count_label.pack(side="left")
-        self.progress = ttk.Progressbar(status, maximum=LABELS_PER_PAGE, length=180, mode="determinate")
+        self.progress = ttk.Progressbar(status, maximum=LABELS_PER_PAGE, length=150, mode="determinate")
         self.progress.pack(side="right")
 
         actions = ttk.Frame(main, style="App.TFrame")
@@ -659,36 +674,48 @@ class LabelApp:
         self.print_button.pack(side="right")
         self.save_button = ttk.Button(actions, text="Enregistrer PDF", command=self.save_pdf, state="disabled")
         self.save_button.pack(side="right", padx=8)
+        modifier_label = "⌘" if sys.platform == "darwin" else "Ctrl+"
+        clear_shortcut = "⌘⌫" if sys.platform == "darwin" else "Ctrl+Suppr"
+        delete_shortcut = "⌫" if sys.platform == "darwin" else "Delete"
         ttk.Label(
             main,
-            text="Ctrl+N Ajouter   ·   Delete Supprimer   ·   Ctrl+Suppr Vider la liste   ·   Ctrl+S Enregistrer   ·   Ctrl+P Imprimer",
+            text=f"{modifier_label}N Ajouter   ·   {delete_shortcut} Supprimer   ·   {clear_shortcut} Vider   ·   {modifier_label}S PDF   ·   {modifier_label}P Imprimer",
             style="Subheader.TLabel",
         ).pack(anchor="e", pady=(10, 0))
 
         self.listbox.bind("<<TreeviewSelect>>", lambda _event: self.update_controls())
-        root.bind("<Control-n>", lambda _event: self.show_add_form())
-        root.bind("<Delete>", lambda _event: self.delete_label())
-        root.bind("<Control-Delete>", lambda _event: self.clear_list())
-        root.bind("<Control-s>", lambda _event: self.save_pdf())
-        root.bind("<Control-p>", lambda _event: self.print_sheet())
+        modifier = self.shortcut_modifier
+        root.bind(f"<{modifier}-n>", lambda _event: self.show_add_form())
+        root.bind(f"<{self.delete_key}>", lambda _event: self.delete_label())
+        root.bind(f"<{modifier}-{self.delete_key}>", lambda _event: self.clear_list())
+        root.bind(f"<{modifier}-s>", lambda _event: self.save_pdf())
+        root.bind(f"<{modifier}-p>", lambda _event: self.print_sheet())
         self.update_controls()
         self.show_add_form()
+        center_window(root)
         root.after_idle(self.lot_entry.focus_set)
 
     def _build_menu(self) -> None:
-        menu_font = ("Segoe UI", 10)
+        menu_font = ("Helvetica Neue" if sys.platform == "darwin" else "Segoe UI", 10)
+        modifier_label = "⌘" if sys.platform == "darwin" else "Ctrl+"
+        clear_accelerator = "⌘⌫" if sys.platform == "darwin" else "Ctrl+Suppr"
+        delete_accelerator = "⌫" if sys.platform == "darwin" else "Delete"
         menu_bar = tk.Menu(self.root, font=menu_font)
         file_menu = tk.Menu(menu_bar, tearoff=False, font=menu_font)
-        file_menu.add_command(label="Enregistrer en PDF", accelerator="Ctrl+S", command=self.save_pdf)
-        file_menu.add_command(label="Aperçu / imprimer", accelerator="Ctrl+P", command=self.print_sheet)
+        file_menu.add_command(label="Enregistrer en PDF", accelerator=f"{modifier_label}S", command=self.save_pdf)
+        file_menu.add_command(label="Aperçu / imprimer", accelerator=f"{modifier_label}P", command=self.print_sheet)
         file_menu.add_separator()
         file_menu.add_command(label="Quitter", command=self.root.destroy)
         menu_bar.add_cascade(label="Fichier", menu=file_menu)
 
         labels_menu = tk.Menu(menu_bar, tearoff=False, font=menu_font)
-        labels_menu.add_command(label="Ajouter une étiquette", accelerator="Ctrl+N", command=self.show_add_form)
-        labels_menu.add_command(label="Supprimer la sélection", accelerator="Delete", command=self.delete_label)
-        labels_menu.add_command(label="Vider la liste", accelerator="Ctrl+Suppr", command=self.clear_list)
+        labels_menu.add_command(
+            label="Ajouter une étiquette", accelerator=f"{modifier_label}N", command=self.show_add_form
+        )
+        labels_menu.add_command(
+            label="Supprimer la sélection", accelerator=delete_accelerator, command=self.delete_label
+        )
+        labels_menu.add_command(label="Vider la liste", accelerator=clear_accelerator, command=self.clear_list)
         menu_bar.add_cascade(label="Étiquettes", menu=labels_menu)
         self.root.configure(menu=menu_bar)
 
